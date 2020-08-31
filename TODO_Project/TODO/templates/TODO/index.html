@@ -1,0 +1,71 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en" data-framework="es6">
+
+<head>
+    <meta charset="utf-8">
+    <title>Django • TodoMVC</title>
+    <link rel="icon" type="image/ico" href="{% static "TODO/favicon.ico" %}"/>
+    <link rel="stylesheet" href="{% static "TODO/index.css" %}">
+</head>
+
+<body>
+    <section class="todoapp">
+        <header class="header">
+            <h1>todos</h1>
+            <form id="createForm" action="create" method="post">
+                {% csrf_token %}
+                <input class="new-todo" name="title" placeholder="What needs to be done?" autofocus>
+            </form>
+        </header>
+        {% if items %}
+        <section style="display:block" class="main">
+        {% else %}
+        <section style="display:none" class="main">
+        {% endif %}
+            <input id="toggle-all" class="toggle-all" type="checkbox">
+            <label for="toggle-all">Mark all as complete</label>
+            <ul class="todo-list">
+            {% for item in items %}
+                <li {% if item.completed %}  class="completed" {% endif %}>
+                    <form class="updateForm" action="update" method="post">
+                        {% csrf_token %}
+                        <div class="view">
+                            <input type="hidden" name="id" value={{item.id}}>
+                            <input type="checkbox" class="toggle" name="completed" {% if item.completed %}  checked {% endif %}>
+                            <label>{{ item.title }}</label>
+                            <button class="destroy" name="delete"></button>
+                        </div>
+                        <input type="text" class="hidden" name="title" value="{{ item.title }}">
+                    </form>
+                </li>
+            {% endfor %}
+            </ul>
+        </section>
+        <footer class="footer">
+            <span class="todo-count"></span>
+            <ul class="filters">
+                <li>
+                    <a href="?all" {% if filter == "all" %}  class="selected" {% endif %}>All</a>
+                </li>
+                <li>
+                    <a href="?active" {% if filter == "active" %}  class="selected" {% endif %}>Active</a>
+                </li>
+                <li>
+                    <a href="?completed" {% if filter == "completed" %}  class="selected" {% endif %}>Completed</a>
+                </li>
+            </ul>
+            <form action="clear-completed" method="post">
+                {% csrf_token %}
+                <button class="clear-completed">Clear completed</button>
+            </form>
+        </footer>
+    </section>
+    <footer class="info">
+        <p>Double-click to edit a todo</p>
+        <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
+    </footer>
+    <script src="{% static "TODO/index.js" %}"></script>
+</body>
+</html>
