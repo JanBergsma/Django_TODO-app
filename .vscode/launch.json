@@ -14,6 +14,17 @@
                 "--noreload"
             ],
             "django": true
+        },
+        {
+            "name": "Python: Test Django",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/TODO_Project/manage.py",
+            "args": [
+                "test"
+            ],
+            "cwd": "${workspaceFolder}/TODO_Project/",
+            "django": true
         }
     ]
 }

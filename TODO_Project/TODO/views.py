@@ -14,9 +14,22 @@ logger = logging.getLogger(__name__)
 
 FILTER = 'filter'
 
+
+class PostView(View):
+    def redirect_to_index(self, request):
+        if FILTER in request.session:
+            return HttpResponseRedirect(
+                '?'.join([
+                    reverse('TODO:index'),
+                    request.session[FILTER]
+                ]))
+        else:
+            return HttpResponseRedirect(reverse('TODO:index'))
+
+
 class IndexView(View):
     def get(self, request):
-        # logger.debug(f'{request}')
+        logger.debug(f'IndexView GET {request}')
         items = Item.objects.all()
         items.order_by('creation_date')
         request.session[FILTER] = 'all'
@@ -31,9 +44,10 @@ class IndexView(View):
         context = {'items': items, 'filter': request.session[FILTER]}
         return render(request, 'TODO/index.html', context)
 
-class CreateView(View):
+
+class CreateView(PostView):
     def post(self, request):
-        logger.debug(f'Post {request.POST}')
+        logger.debug(f'CreateView POST {request.POST}')
         data = request.POST
         title = data['title']
         completed = False
@@ -44,25 +58,19 @@ class CreateView(View):
             logger.debug(f'Item({data}) created')
         else:
             raise Http404
-        
-        if FILTER in request.session:
-            return HttpResponseRedirect(
-                '?'.join([
-                    reverse('TODO:index'), 
-                    request.session[FILTER]
-            ]))
-        else: 
-            return HttpResponseRedirect(reverse('TODO:index'))
+
+        return self.redirect_to_index(request)
 
 
-class UpdateView(View):
+class UpdateView(PostView):
     def post(self, request):
-        logger.debug(f'Post {request.POST}')
+        logger.debug(f'UpdateView POST {request.POST}')
         data = request.POST
-        if 'delete' in data: return self.delete_item(data)
-        return self.update_item(data)
+        if 'delete' in data:
+            return self.delete_item(data, request)
+        return self.update_item(data, request)
 
-    def update_item(self, data):
+    def update_item(self, data, request):
         id = data['id']
         title = data['title']
         completed = True if 'completed' in data else False
@@ -75,17 +83,17 @@ class UpdateView(View):
             logger.debug(f'Item({data}) created')
         else:
             raise Http404
-        return HttpResponseRedirect(reverse('TODO:index'))
-        
-    def delete_item(self, data):
+        return self.redirect_to_index(request)
+
+    def delete_item(self, data, request):
         id = data['id']
         item = get_object_or_404(Item, pk=id)
         item.delete()
-        return HttpResponseRedirect(reverse('TODO:index'))
+        return self.redirect_to_index(request)
 
 
-class ClearDeletedView(View):
+class ClearDeletedView(PostView):
     def post(self, request):
-        logger.debug(f'Post {request.POST}')
+        logger.debug(f'ClearDeletedView POST {request.POST}')
         Item.objects.all().filter(completed=True).delete()
-        return HttpResponseRedirect(reverse('TODO:index'))
+        return self.redirect_to_index(request)
